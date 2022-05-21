@@ -25,6 +25,7 @@ import { collection,  setDoc,doc,addDoc,getDocs,getDoc,updateDoc,getFirestore,qu
 import app from '../config/firebase'
 import { getAuth } from 'firebase/auth'
 import Toast from 'react-native-root-toast'
+import Bottomtab from "../components/Bottomtab"
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
   }
@@ -33,33 +34,44 @@ export default function Profile(props) {
       const [refreshing, setRefreshing] = React.useState(false);
     const [indicator,showindicator]=React.useState(false)
     const iduser=props.route.params.userid
-    
     const auth=getAuth(app)
     const db=getFirestore(app)
     const [singleuser,setsingetuser]=React.useState({})
+    const [existuser,setexistuser]=React.useState({})
     const[allfeeds,setallfeeds]=React.useState([])
     const[ftr,setftr]=React.useState(false)
     const[followerlist,setfollowerlist]=React.useState([])
+    const[followinglist,setfollowinglist]=React.useState([])
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
         wait(2000).then(() => setRefreshing(false));
       }, []);
-    
       const followerfunctionality=async()=>{
         showindicator(true)
         try{
         let newfollowers=singleuser.followers
+        let newfollowing=existuser.following
+
         newfollowers.push({
             userid:auth.currentUser.uid
         })
+        newfollowing.push({
+            userid:iduser
+        })
         const upDocRef = doc(db, "users", iduser);
+        const upprofileRef = doc(db, "users", auth.currentUser.uid);
         await updateDoc(upDocRef, 
             {
               followers:newfollowers,
             }
             )
+        await updateDoc(upprofileRef, 
+                {
+                  following:newfollowing,
+                }
+                )   
             
-            let nameoffollower='UnFollowed '+singleuser.username
+            let nameoffollower='Followed '+singleuser.username
             let toast = Toast.show(nameoffollower, {
                 duration: Toast.durations.LONG,
               });
@@ -84,12 +96,19 @@ export default function Profile(props) {
         showindicator(true)
         try{
         let newfollowers= arrayRemove(singleuser.followers, auth.currentUser.uid);
+        let newfollowing= arrayRemove(existuser.following, iduser);
         const upDocRef = doc(db, "users", iduser);
+        const upprofileRef = doc(db, "users", auth.currentUser.uid);
         await updateDoc(upDocRef, 
             {
               followers:newfollowers,
             }
             )
+        await updateDoc(upprofileRef, 
+                {
+                  following:newfollowing,
+                }
+                )   
             
             let nameoffollower='UnFollowed '+singleuser.username
             let toast = Toast.show(nameoffollower, {
@@ -132,10 +151,21 @@ export default function Profile(props) {
     props.navigation.navigate("Home")
 }
     }
-
+    const getloginuserinfo=async()=>{
+        showindicator(true)
+        const docRef = doc(db, "users", auth.currentUser.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+  setexistuser(docSnap.data())
+} else {
+    showindicator(false)
+    props.navigation.navigate("Home")
+}
+    }
     const followingpage=(suser)=>
     {
         let tempdata=[]
+        let tempdata1=[]
         setftr(false)
         suser.followers.map((item)=>{
             showindicator(true)
@@ -151,17 +181,66 @@ export default function Profile(props) {
             })
     
         })
+
+        suser.following.map((item)=>{
+            showindicator(true)
+            const docRef = doc(db, "users", item.userid);
+            getDoc(docRef).then((docSnap)=>{
+                tempdata1.push(docSnap.data())
+            }).catch(()=>{
+            })
+    
+        })
         
         setfollowerlist(tempdata)
+        setfollowinglist(tempdata1)
         showindicator(false)
     }
     React.useEffect(()=>{
         if(isFocused)
         {
+            getloginuserinfo()
             getuserinfo()
             getuserfeeds2()
         }          
-    },[props,refreshing,isFocused])    
+    },[props,refreshing,isFocused])
+    
+    const reportuser=()=>{
+        showindicator(true)
+        let bcku=[]
+        
+        const docRef = doc(db, "users", auth.currentUser.uid);
+        getDoc(docRef).then((docSnap)=>{
+            const nu=docSnap.data()
+            bcku=nu.blockusers
+            bcku.push({userid:iduser})
+            const upDocRef = doc(db, "users", auth.currentUser.uid);    
+            updateDoc(upDocRef,{blockusers:bcku}).then(()=>{
+              showindicator(false)
+              alert(`Thanks for reporting you no longer see the post or profile of ${singleuser.username}`)
+              let toast = Toast.show('blocked', {
+                    duration: Toast.durations.LONG,
+                  });
+                  setTimeout(function hideToast() {
+                    Toast.hide(toast);
+                  }, 1000);          
+            props.navigation.navigate("Home")
+                }).catch(()=>{
+              showindicator(false)
+                let toast = Toast.show('Try again later', {
+                    duration: Toast.durations.LONG,
+                  });
+                  setTimeout(function hideToast() {
+                    Toast.hide(toast);
+                  }, 1000);
+            })
+    
+          }).catch(()=>{
+            showindicator(false)
+        })
+      }
+      
+    
     if(auth.currentUser.uid===iduser)
     {
         return(
@@ -194,6 +273,11 @@ export default function Profile(props) {
                         <Title color={colors.mblack}>{singleuser.username}</Title>
                         <Caption>{singleuser.location}</Caption>
                     </View>
+                    <View style={{justifyContent:"center",alignItems:"center"}}>
+                    <TouchableOpacity style={{backgroundColor:colors.pink,borderRadius:RFPercentage(1)}} onPress={() =>props.navigation.navigate("Addbio")}>
+                        <Text style={{textAlign:"center",padding:RFPercentage(1),color:colors.white}}>Add bio</Text>
+                    </TouchableOpacity>
+                    </View>
                     </View>
                     <View style={{display:singleuser.bio?"flex":"none",borderBottomWidth:3
                     ,borderBottomColor:colors.grey,marginBottom:RFPercentage(5),paddingBottom:RFPercentage(2)}}>
@@ -213,11 +297,11 @@ export default function Profile(props) {
                         </Caption>
                     </View>
                     <View style={{justifyContent:"center",alignItems:"center"}}>
-                        <Title style={{color:colors.pink}} onPress={()=>props.navigation.navigate("FollowingScreen",{usersfollower:followerlist})}>
+                        <Title style={{color:colors.pink}} onPress={()=>props.navigation.navigate("FollowingScreen",{usersfollower:followinglist})}>
                             Following
                         </Title>
                         <Caption>
-                        {singleuser.followers?singleuser.followers.length:0}
+                        {singleuser.following?singleuser.following.length:0}
                         </Caption>
                     </View>
                     <View style={{justifyContent:"center",alignItems:"center"}}>
@@ -245,7 +329,7 @@ export default function Profile(props) {
                       likes:item.data.likes,
                       comments:item.data.comments,
                       id:item.id   
-                    }})}>
+                    },screenname:"Profile",userid:iduser})}>
                 <Image resizeMode= 'stretch' style={{width:"100%",height:RFPercentage(25),borderRadius:RFPercentage(1)}} source={item.data.post?{uri:item.data.post}:require("../../images/nav.png")}></Image>
                 </TouchableOpacity>
                 </View>
@@ -255,7 +339,7 @@ export default function Profile(props) {
                 </View>
                 </ScrollView>     
                 </View>    
-                
+                <Bottomtab props={props}></Bottomtab>
             </Screen>
         )
     }
@@ -291,7 +375,7 @@ export default function Profile(props) {
                         <Title color={colors.mblack}>{singleuser.username}</Title>
                         <Caption>{singleuser.location}</Caption>
                     </View>
-                    <View style={{justifyContent:"center",alignItems:"center"}}>
+                    <View style={{justifyContent:"center",alignItems:"center",flexDirection:"row"}}>
                     {
                         ftr?
                         <TouchableOpacity style={{backgroundColor:colors.pink,borderRadius:RFPercentage(1)}} onPress={unfollowerfunctionality} >
@@ -302,6 +386,9 @@ export default function Profile(props) {
                         <Text style={{textAlign:"center",padding:RFPercentage(1),color:colors.white,display:auth.currentUser.uid===iduser?"none":"flex"}}>Follow</Text>
                     </TouchableOpacity>
                     }
+                    <TouchableOpacity onPress={reportuser} style={{marginLeft:RFPercentage(1),justifyContent:"center",alignItems:"center"}}>
+          <Text style={{color:"red"}}>Report</Text>
+        </TouchableOpacity>
                     </View>
                     </View>
                     <View style={{display:singleuser.bio?"flex":"none",borderBottomWidth:3
@@ -322,11 +409,11 @@ export default function Profile(props) {
                         </Caption>
                     </View>
                     <View style={{justifyContent:"center",alignItems:"center"}}>
-                        <Title style={{color:colors.pink}} onPress={()=>props.navigation.navigate("FollowingScreen",{usersfollower:followerlist})}>
+                        <Title style={{color:colors.pink}} onPress={()=>props.navigation.navigate("FollowingScreen",{usersfollower:followinglist})}>
                         Following
                         </Title>
                         <Caption>
-                        {singleuser.followers?singleuser.followers.length:0}
+                        {singleuser.following?singleuser.following.length:0}
                         </Caption>
                     </View>
                     <View style={{justifyContent:"center",alignItems:"center"}}>
@@ -354,7 +441,7 @@ export default function Profile(props) {
                       likes:item.data.likes,
                       comments:item.data.comments,
                       id:item.id   
-                    }})}>
+                    },screenname:"Profile",userid:iduser})}>
                 <Image resizeMode= 'stretch' style={{width:"100%",height:RFPercentage(25),borderRadius:RFPercentage(1)}} source={item.data.post?{uri:item.data.post}:require("../../images/nav.png")}></Image>
                 </TouchableOpacity>
                 </View>
@@ -364,7 +451,7 @@ export default function Profile(props) {
                 </View>
                 </ScrollView>     
                 </View>    
-                
+<Bottomtab props={props}></Bottomtab>                
             </Screen>
           )
     }

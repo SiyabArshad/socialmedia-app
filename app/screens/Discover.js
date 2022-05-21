@@ -11,6 +11,7 @@ import { collection,  setDoc,doc,addDoc,getDocs,getDoc,updateDoc,getFirestore,qu
 import app from '../config/firebase'
 import { getAuth } from 'firebase/auth'
 import { useIsFocused } from "@react-navigation/native";
+import Bottomtab from "../components/Bottomtab"
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
   }
@@ -23,6 +24,7 @@ export default function Discover(props) {
     const [allposts,setallposts]=React.useState([])
     const [refreshing, setRefreshing] = React.useState(false);
     const [users,setusers]=React.useState([])
+    const[dn,setdn]=React.useState("")
     const onRefresh = React.useCallback(() => {
       setRefreshing(true);
       wait(2000).then(() => setRefreshing(false));
@@ -30,6 +32,8 @@ export default function Discover(props) {
   
     const readingdata=()=>{
         showindicator(true)
+        //setallfeeds([])
+      ///  setallposts([])
         readinguserdata()
         getDocs(collection(db, "allposts")).then((res)=>{
           const quests=res.docs.map(doc=>({
@@ -85,15 +89,15 @@ export default function Discover(props) {
           const tempusers=[]
           quests.map((item,i)=>{
             let flagv=false
-            for(let k=0;k<nu.followers.length;k++)
+            for(let k=0;k<nu.blockusers.length;k++)
             {
-              if(nu.followers[k].userid==item.data.userid)
+              if(nu.blockusers[k].userid==item.data.userid)
               {
                 flagv=true
                 break
               }
             }
-            if(flagv)
+            if(!flagv)
             {
               tempusers.push({
                 data:item.data,
@@ -109,23 +113,37 @@ export default function Discover(props) {
       }).catch(()=>{
         showindicator(false)
         })
+      
   }
+    React.useEffect(()=>{
+      onRefresh()
+      readinguserdata()
+      readingdata()
+    },[])
     React.useEffect(()=>{
       if(isFocused)
       {
         readinguserdata()
         readingdata()
       }
-    },[isFocused])
-    React.useEffect(()=>{
-      readinguserdata()
-      readingdata()
-    },[refreshing,props])
-    React.useEffect(()=>{
-      onRefresh()
-      readinguserdata()
-      readingdata()
-    },[])
+    },[isFocused,refreshing,props])
+    if(indicator)
+    {
+      return(
+<LoadingModal></LoadingModal>
+      )
+    }
+    else if(allfeeds.length==0)
+    {
+      return(
+        <View style={{display:"flex",justifyContent:"center",alignItems:"center",flex:1,backgroundColor:colors.white}}>
+          <Text style={{color:colors.mblack}}>Please wait</Text>
+          <Bottomtab props={props}></Bottomtab>
+        </View>
+      )
+    }
+    else
+    {
     return (
     <Screen style={{ flex: 1,backgroundColor: colors.white }}>
         <LoadingModal show={indicator}></LoadingModal>
@@ -156,7 +174,7 @@ export default function Discover(props) {
             <Text style={{marginTop:RFPercentage(1),color:colors.mblack,fontWeight:"bold"}}>{item.username&&item.username}</Text>
             <Text style={{marginVertical:RFPercentage(1),color:colors.mblack}}>{item.time&&new Date(item.time.seconds*1000).toLocaleDateString()
 }</Text>
-         <TouchableOpacity onPress={()=>props.navigation.navigate("PostScreen",{content:item})}>           
+         <TouchableOpacity onPress={()=>props.navigation.navigate("PostScreen",{content:item,screenname:"Discover",userid:""})}>           
         <Image  resizeMode= 'stretch' style={{width:"100%",marginVertical:RFPercentage(3),height:RFPercentage(35),borderRadius:RFPercentage(1)}} source={item.post?{uri:item.post}:require("../../images/nav.png")}></Image>
         </TouchableOpacity>
         </View>
@@ -164,11 +182,9 @@ export default function Discover(props) {
             })
         }
     </ScrollView>
-      <TouchableOpacity onPress={()=>props.navigation.navigate("AddpostScreen")}  style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5),display:"flex",justifyContent:"center",alignItems:"center",backgroundColor:colors.pink,position:"absolute",top:"90%",right:"5%"}}>
-      <Ionicons name="add" size={30} color="white"  />
-      </TouchableOpacity>
     </View>
-    
+ <Bottomtab props={props}></Bottomtab>   
     </Screen>
   )
+      }
 }

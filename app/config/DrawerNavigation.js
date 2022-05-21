@@ -9,6 +9,10 @@ import Contact from '../screens/Contacts';
 import Profile from '../screens/Profile';
 import Discover from '../screens/Discover';
 import UdateProfile from "../screens/UdateProfile"
+import Addtweet from '../screens/Addtweet';
+import Tweets from '../screens/Tweets';
+import Videos from '../screens/Videos';
+import Addvideo from '../screens/Addvideo';
 export default function DrawerNavigation() {
   return (
       <Drawer.Navigator initialRouteName='Home' screenOptions={{headerShown:false}} drawerContent={props => <DrawerContent {...props}></DrawerContent>} >
@@ -18,6 +22,10 @@ export default function DrawerNavigation() {
         <Drawer.Screen name="UpdateProfile" component={UdateProfile} />
         <Drawer.Screen name="Addbio" component={Addbio} />
         <Drawer.Screen name="Discover" component={Discover} />
+        <Drawer.Screen name="AddTweet" component={Addtweet} />
+        <Drawer.Screen name="Tweets" component={Tweets} />
+        <Drawer.Screen name="Videos" component={Videos} />
+        <Drawer.Screen name="Addvideo" component={Addvideo} />
       </Drawer.Navigator>
   )
 }

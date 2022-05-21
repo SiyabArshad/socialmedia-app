@@ -12,6 +12,7 @@ import { Entypo } from '@expo/vector-icons';
 import Dialog from "react-native-dialog";
 import Toast from 'react-native-root-toast'
 import Bottomtab from "../components/Bottomtab"
+import { Video, AVPlaybackStatus } from 'expo-av';
 import {
     useTheme,
     Avatar,
@@ -27,11 +28,9 @@ import {
 import { collection,  deleteDoc,setDoc,doc,addDoc,getDocs,getDoc,updateDoc,getFirestore,query, where } from "firebase/firestore";
 import app from '../config/firebase'
 import { getAuth } from 'firebase/auth'
-export default function Post(props) {
+export default function Singlevideo(props) {
     const [indicator,showindicator]=React.useState(false)
     const content=props.route.params.content//posts person data
-    const screenname=props.route.params.screenname
-    const userid=props.route.params.userid
     const[cmt,setcmt]=React.useState("")
     const[isliked,setisliked]=React.useState(false)
     const[iscmtshown,setiscmtshown]=React.useState(false)
@@ -49,7 +48,7 @@ export default function Post(props) {
           profile:auth.currentUser.photoURL,
           username:auth.currentUser.displayName
         })
-        const upDocRef = doc(db, "allposts", content.id);    
+        const upDocRef = doc(db, "videos", content.id);    
         updateDoc(upDocRef,{comments:newcomment}).then(()=>{
           showindicator(false)
             let toast = Toast.show('Comment added', {
@@ -61,7 +60,7 @@ export default function Post(props) {
               const docRef = doc(db, "users", content.userid);
               getDoc(docRef).then((docSnap)=>{
                   const nu=docSnap.data()
-                  let stringnotify=auth.currentUser.displayName+" "+"commented on your post"
+                  let stringnotify=auth.currentUser.displayName+" "+"commented on your video"
                   sendPushNotification(nu.token,stringnotify)
                 }).catch(()=>{
               })
@@ -84,7 +83,7 @@ export default function Post(props) {
       let newlikes=[]
       newlikes=content.likes
       newlikes.push({userid:auth.currentUser.uid})
-      const upDocRef = doc(db, "allposts", content.id);    
+      const upDocRef = doc(db, "videos", content.id);    
       updateDoc(upDocRef,{likes:newlikes}).then(()=>{
         setisliked(true)
           let toast = Toast.show('Liked', {
@@ -96,7 +95,7 @@ export default function Post(props) {
             const docRef = doc(db, "users", content.userid);
             getDoc(docRef).then((docSnap)=>{
                 const nu=docSnap.data()
-                let stringnotify=auth.currentUser.displayName+" "+"likes your post"
+                let stringnotify=auth.currentUser.displayName+" "+"likes your video"
                 sendPushNotification(nu.token,stringnotify)
               }).catch(()=>{
             })
@@ -124,10 +123,10 @@ export default function Post(props) {
     }
     const handeldeletepost=()=>{
         showindicator(true)
-        const upDocRef = doc(db, "allposts", content.id);    
+        const upDocRef = doc(db, "videos", content.id);    
         deleteDoc(upDocRef).then(()=>{
             showindicator(false)
-            let toast = Toast.show('Post deleted', {
+            let toast = Toast.show('video deleted', {
                 duration: Toast.durations.LONG,
               });
               setTimeout(function hideToast() {
@@ -229,10 +228,10 @@ export default function Post(props) {
       </Dialog.Container>
     <View style={{padding:RFPercentage(2)}}>
         <View style={{display:"flex",flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
-        <TouchableOpacity onPress={()=>props.navigation.navigate(screenname,{userid:userid})}>
+        <TouchableOpacity onPress={()=>props.navigation.navigate("Videos")}>
         <Ionicons name="chevron-back" size={30} color={colors.mblack} />
         </TouchableOpacity>
-            <Text style={{fontSize:RFPercentage(2.5)}}>{content.username} Post</Text>
+            <Text style={{fontSize:RFPercentage(2.5)}}>{content.username} Video</Text>
             <TouchableOpacity>
             <MaterialIcons name="supervisor-account" size={35} color={colors.mblack} />
         </TouchableOpacity>
@@ -250,7 +249,15 @@ export default function Post(props) {
         </View>
     </View>
         <View>
-            <Image resizeMode= 'stretch' style={{width:"100%",height:RFPercentage(40),borderRadius:RFPercentage(1),marginVertical:RFPercentage(2)}} source={content.post?{uri:content.post}:require("../../images/nav.png")}></Image>
+        <Video
+        style={{width:"100%",height:RFPercentage(40),borderRadius:RFPercentage(1),marginVertical:RFPercentage(2)}}
+        source={{
+          uri: content.video,
+        }}
+        useNativeControls
+        resizeMode="stretch"
+        isLooping
+      />
 </View>
      <View style={{flexDirection:"row",justifyContent:"space-between",paddingHorizontal:RFPercentage(1)}}> 
         <View>

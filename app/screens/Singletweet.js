@@ -11,7 +11,6 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { Entypo } from '@expo/vector-icons';
 import Dialog from "react-native-dialog";
 import Toast from 'react-native-root-toast'
-import Bottomtab from "../components/Bottomtab"
 import {
     useTheme,
     Avatar,
@@ -27,11 +26,10 @@ import {
 import { collection,  deleteDoc,setDoc,doc,addDoc,getDocs,getDoc,updateDoc,getFirestore,query, where } from "firebase/firestore";
 import app from '../config/firebase'
 import { getAuth } from 'firebase/auth'
-export default function Post(props) {
+import Bottomtab from "../components/Bottomtab"
+export default function Singletweet(props) {
     const [indicator,showindicator]=React.useState(false)
     const content=props.route.params.content//posts person data
-    const screenname=props.route.params.screenname
-    const userid=props.route.params.userid
     const[cmt,setcmt]=React.useState("")
     const[isliked,setisliked]=React.useState(false)
     const[iscmtshown,setiscmtshown]=React.useState(false)
@@ -49,7 +47,7 @@ export default function Post(props) {
           profile:auth.currentUser.photoURL,
           username:auth.currentUser.displayName
         })
-        const upDocRef = doc(db, "allposts", content.id);    
+        const upDocRef = doc(db, "tweets", content.id);    
         updateDoc(upDocRef,{comments:newcomment}).then(()=>{
           showindicator(false)
             let toast = Toast.show('Comment added', {
@@ -61,7 +59,7 @@ export default function Post(props) {
               const docRef = doc(db, "users", content.userid);
               getDoc(docRef).then((docSnap)=>{
                   const nu=docSnap.data()
-                  let stringnotify=auth.currentUser.displayName+" "+"commented on your post"
+                  let stringnotify=auth.currentUser.displayName+" "+"commented on your Fleet"
                   sendPushNotification(nu.token,stringnotify)
                 }).catch(()=>{
               })
@@ -84,7 +82,7 @@ export default function Post(props) {
       let newlikes=[]
       newlikes=content.likes
       newlikes.push({userid:auth.currentUser.uid})
-      const upDocRef = doc(db, "allposts", content.id);    
+      const upDocRef = doc(db, "tweets", content.id);    
       updateDoc(upDocRef,{likes:newlikes}).then(()=>{
         setisliked(true)
           let toast = Toast.show('Liked', {
@@ -96,7 +94,7 @@ export default function Post(props) {
             const docRef = doc(db, "users", content.userid);
             getDoc(docRef).then((docSnap)=>{
                 const nu=docSnap.data()
-                let stringnotify=auth.currentUser.displayName+" "+"likes your post"
+                let stringnotify=auth.currentUser.displayName+" "+"likes your Fleet"
                 sendPushNotification(nu.token,stringnotify)
               }).catch(()=>{
             })
@@ -124,10 +122,10 @@ export default function Post(props) {
     }
     const handeldeletepost=()=>{
         showindicator(true)
-        const upDocRef = doc(db, "allposts", content.id);    
+        const upDocRef = doc(db, "tweets", content.id);    
         deleteDoc(upDocRef).then(()=>{
             showindicator(false)
-            let toast = Toast.show('Post deleted', {
+            let toast = Toast.show('Fleet deleted', {
                 duration: Toast.durations.LONG,
               });
               setTimeout(function hideToast() {
@@ -222,17 +220,17 @@ export default function Post(props) {
         <Dialog.Container visible={visible}>
         <Dialog.Title>Image Options</Dialog.Title>
         <Dialog.Description>
-          Are You sure You want to delete this post this action cannot be Revert.
+          Are You sure You want to delete this Tweet this action cannot be Revert.
         </Dialog.Description>
         <Dialog.Button label="Cancel" onPress={handleCancle} />
         <Dialog.Button label="Delete" onPress={handledelete} />
       </Dialog.Container>
     <View style={{padding:RFPercentage(2)}}>
         <View style={{display:"flex",flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
-        <TouchableOpacity onPress={()=>props.navigation.navigate(screenname,{userid:userid})}>
+        <TouchableOpacity onPress={()=>props.navigation.navigate("Tweets")}>
         <Ionicons name="chevron-back" size={30} color={colors.mblack} />
         </TouchableOpacity>
-            <Text style={{fontSize:RFPercentage(2.5)}}>{content.username} Post</Text>
+            <Text style={{fontSize:RFPercentage(2.5)}}>{content.username} Fleet</Text>
             <TouchableOpacity>
             <MaterialIcons name="supervisor-account" size={35} color={colors.mblack} />
         </TouchableOpacity>
@@ -249,8 +247,9 @@ export default function Post(props) {
         </TouchableOpacity>
         </View>
     </View>
-        <View>
-            <Image resizeMode= 'stretch' style={{width:"100%",height:RFPercentage(40),borderRadius:RFPercentage(1),marginVertical:RFPercentage(2)}} source={content.post?{uri:content.post}:require("../../images/nav.png")}></Image>
+        <View style={{marginVertical:RFPercentage(1.5)}}>
+        <Text style={{marginTop:RFPercentage(1),color:colors.mblack,fontSize:RFPercentage(3)}}>{content.tweet&&content.tweet}</Text>
+<Text style={{marginTop:RFPercentage(1),color:colors.mblack,fontSize:RFPercentage(2.5),fontWeight:'bold'}}>{content.tag&&content.tag}</Text>
 </View>
      <View style={{flexDirection:"row",justifyContent:"space-between",paddingHorizontal:RFPercentage(1)}}> 
         <View>
@@ -286,7 +285,7 @@ export default function Post(props) {
  }
      </ScrollView>
         </View>    
-        <Bottomtab props={props}></Bottomtab>
+ <Bottomtab props={props}></Bottomtab>
     </Screen>
   )
 }

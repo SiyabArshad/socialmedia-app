@@ -22,7 +22,7 @@ import {
     Switch,
     Searchbar
 } from 'react-native-paper';
-
+import Bottomtab from "../components/Bottomtab"
 export default function Contacts(props) {
     const auth=getAuth(app)
     const db=getFirestore(app)
@@ -92,6 +92,7 @@ export default function Contacts(props) {
     }
       </ScrollView>           
         </View>    
+        <Bottomtab props={props}></Bottomtab>
     </Screen>
   )
 }

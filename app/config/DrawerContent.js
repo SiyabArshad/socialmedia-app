@@ -23,12 +23,14 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import { FontAwesome } from '@expo/vector-icons';
 import { Ionicons, Feather } from '@expo/vector-icons';
+import { Entypo } from '@expo/vector-icons';
 import colors from "../config/colors"
 import { collection,  setDoc,doc,addDoc,getDocs,getDoc,updateDoc,getFirestore,query, where } from "firebase/firestore";
 import app from './firebase';
 import {signOut,getAuth} from "firebase/auth"
 import Toast from 'react-native-root-toast';
 import LoadingModal from '../components/LoadingModal';
+
 export function DrawerContent(props) {
 const auth=getAuth(app)
 const db=getFirestore(app)
@@ -65,7 +67,7 @@ const followingpage=(suser)=>
     {
         showindicator(true)
         let tempdata=[]
-        suser.followers.map((item)=>{
+        suser.following.map((item)=>{
             showindicator(true)
             const docRef = doc(db, "users", item.userid);
             getDoc(docRef).then((docSnap)=>{
@@ -143,23 +145,26 @@ React.useEffect(()=>{
                             label="Chat"
                             onPress={() =>props.navigation.navigate("ContactScreen",{usersfollower:followerlist})}
                         />
-                                     <DrawerItem 
-                            icon={({color, size}) => (
-                                <Icon 
-                                name="plus-outline" 
-                                color={colors.mblack}
-                                size={size}
-                                />
-                            )}
-                            label="Add Bio"
-                            onPress={() =>props.navigation.navigate("Addbio")}
-                        />
                     <DrawerItem 
                             icon={({color, size}) => (
                                 <FontAwesome name="safari" size={size} color={colors.mblack} />
                             )}
                             label="Discover"
                             onPress={() =>props.navigation.navigate("Discover")}
+                        />
+                <DrawerItem 
+                    icon={({color, size}) => (
+                        <AntDesign name="retweet" size={size} color={colors.mblack} />
+                            )}
+                            label="Fleet"
+                            onPress={() =>props.navigation.navigate("Tweets")}
+                        />
+                        <DrawerItem 
+                    icon={({color, size}) => (
+                        <Entypo name="video" size={size} color={colors.mblack} />
+                            )}
+                            label="Videos"
+                            onPress={() =>props.navigation.navigate("Videos")}
                         />
                         <DrawerItem 
                             icon={({color, size}) => (

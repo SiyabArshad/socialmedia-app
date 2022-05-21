@@ -10,14 +10,12 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { collection,  setDoc,doc,addDoc,getDocs,getDoc,updateDoc,getFirestore,query, where } from "firebase/firestore";
 import app from '../config/firebase'
 import { getAuth } from 'firebase/auth'
-import Constants from 'expo-constants';
-import * as Notifications from 'expo-notifications';
 import { useIsFocused } from "@react-navigation/native";
 import Bottomtab from "../components/Bottomtab"
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
   }
-export default function Home(props) {
+export default function Tweets(props) {
   const isFocused = useIsFocused();
     const auth=getAuth(app)
     const db=getFirestore(app)
@@ -26,15 +24,15 @@ export default function Home(props) {
     const [allposts,setallposts]=React.useState([])
     const [refreshing, setRefreshing] = React.useState(false);
     const [users,setusers]=React.useState([])
+
     const onRefresh = React.useCallback(() => {
       setRefreshing(true);
       wait(2000).then(() => setRefreshing(false));
     }, []);
-  
     const readingdata=()=>{
         showindicator(true)
         readinguserdata()
-        getDocs(collection(db, "allposts")).then((res)=>{
+        getDocs(collection(db, "tweets")).then((res)=>{
           const quests=res.docs.map(doc=>({
             data:doc.data(),
             id:doc.id
@@ -52,8 +50,8 @@ export default function Home(props) {
                 if(item.data.userid==users[i].data.userid)
                 {
                   const postfeed={
-                    post:item.data.post,
-                    caption:item.data.caption,
+                    tweet:item.data.tweet,
+                    tag:item.data.tag,
                     time:item.data.time,
                     username:users[i].data.username,
                     profile:users[i].data.profile,
@@ -88,15 +86,15 @@ export default function Home(props) {
           const tempusers=[]
           quests.map((item,i)=>{
             let flagv=false
-            for(let k=0;k<nu.following.length;k++)
+            for(let k=0;k<nu.blockusers.length;k++)
             {
-              if(nu.following[k].userid==item.data.userid)
+              if(nu.blockusers[k].userid==item.data.userid)
               {
                 flagv=true
                 break
               }
             }
-            if(flagv)
+            if(!flagv)
             {
               tempusers.push({
                 data:item.data,
@@ -112,85 +110,43 @@ export default function Home(props) {
       }).catch(()=>{
         showindicator(false)
         })
+      
   }
-//push notification function
-async function registerForPushNotificationsAsync() {
-  let token;
-  if (Constants.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-    if (finalStatus !== 'granted') {
-      alert('Failed to get push token for push notification!');
-      return;
-    }
-    token = (await Notifications.getExpoPushTokenAsync()).data;
-  } else {
-    alert('Must use physical device for Push Notifications');
-  }
-if(token)
-{
-  await setDoc(doc(db, "users", auth.currentUser.uid), {
-    token
-  },{merge:true});
-  
-}
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    });
-  }
-
-  return token;
-}
-//end push notification function
-React.useEffect(()=>{
-  if(isFocused)
-  {
-    readinguserdata()
-    readingdata()
-  }
-},[isFocused,refreshing,props])
     React.useEffect(()=>{
-      (()=>registerForPushNotificationsAsync())()
+      if(isFocused)
+      {
+        readinguserdata()
+        readingdata()
+      }
+    },[isFocused])
+
+    React.useEffect(()=>{
+      readinguserdata()
+      readingdata()
+    },[refreshing,props])
+
+    React.useEffect(()=>{
       onRefresh()
       readinguserdata()
       readingdata()
     },[])
-    if(indicator)
+    if(indicator||allfeeds.length==0)
     {
       return(
 <LoadingModal></LoadingModal>
-      )
-    }
-    else if(allfeeds.length==0)
-    {
-      return(
-        <View style={{display:"flex",justifyContent:"center",alignItems:"center",flex:1,backgroundColor:colors.white}}>
-          <Text style={{color:colors.mblack}}>Please wait</Text>
-          <TouchableOpacity onPress={()=>props.navigation.navigate("AddpostScreen")}  style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5),display:"flex",justifyContent:"center",alignItems:"center",backgroundColor:colors.pink,position:"absolute",top:"80%",right:"5%"}}>
-      <Ionicons name="add" size={30} color="white"  />
-      </TouchableOpacity>
-      <Bottomtab props={props}></Bottomtab>
-        </View>
       )
     }
     else
     {
     return (
     <Screen style={{ flex: 1,backgroundColor: colors.white }}>
+        
     <View style={{padding:RFPercentage(2)}}>
         <View style={{display:"flex",flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
         <TouchableOpacity onPress={()=>props.navigation.openDrawer()}>
         <Ionicons name="menu-outline" size={35} color={colors.mblack} />
         </TouchableOpacity>
-            <Text style={{fontSize:RFPercentage(2.5)}}>My Feed</Text>
+            <Text style={{fontSize:RFPercentage(2.5)}}>Fleets</Text>
             <TouchableOpacity onPress={()=>props.navigation.navigate('SearchScreen',{usersinfo:users})}>
             <AntDesign name="search1" size={25} color={colors.mblack} />
         </TouchableOpacity>
@@ -202,29 +158,32 @@ React.useEffect(()=>{
             onRefresh={onRefresh}
           />
     }
+    style={{marginBottom:RFPercentage(2)}}
     >
         {
             allfeeds&&allfeeds.map((item,i)=>{                    
                 return(
             <View key={i} style={{flex:1,marginVertical:RFPercentage(2)}}>
             <TouchableOpacity onPress={()=>props.navigation.navigate("Profile",{userid:item.userid})}><Image style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5)}} source={item.profile?{uri:item.profile}:require("../../images/user.png")}></Image></TouchableOpacity>
-            <Text style={{marginTop:RFPercentage(1),color:colors.mblack}}>{item.caption&&item.caption}</Text>
-            <Text style={{marginTop:RFPercentage(1),color:colors.mblack,fontWeight:"bold"}}>{item.username&&item.username}</Text>
-            <Text style={{marginVertical:RFPercentage(1),color:colors.mblack}}>{item.time&&new Date(item.time.seconds*1000).toLocaleDateString()
+            <Text style={{marginTop:RFPercentage(1),color:colors.darkGrey}}>{item.username&&item.username}</Text>
+            <Text style={{marginVertical:RFPercentage(1),color:colors.darkGrey}}>{item.time&&new Date(item.time.seconds*1000).toLocaleDateString()
 }</Text>
-         <TouchableOpacity onPress={()=>props.navigation.navigate("PostScreen",{content:item,screenname:"Home",userid:""})}>           
-        <Image  resizeMode= 'stretch' style={{width:"100%",marginVertical:RFPercentage(3),height:RFPercentage(35),borderRadius:RFPercentage(1)}} source={item.post?{uri:item.post}:require("../../images/nav.png")}></Image>
+<Text style={{marginTop:RFPercentage(1),color:colors.mblack,fontSize:RFPercentage(3)}}>{item.tweet&&item.tweet}</Text>
+<Text style={{marginTop:RFPercentage(1),color:colors.mblack,fontSize:RFPercentage(2.5),fontWeight:'bold'}}>{item.tag&&item.tag}</Text>
+        <TouchableOpacity onPress={()=>props.navigation.navigate("Singletweet",{content:item})} style={{marginVertical:RFPercentage(2),backgroundColor:colors.pink,padding:RFPercentage(1),width:"40%",display:"flex",justifyContent:"center",alignItems:"center",borderRadius:RFPercentage(1)}}>
+            <Text style={{color:colors.white,fontSize:RFPercentage(2)}}>Add Comments</Text>
         </TouchableOpacity>
         </View>
+
         )
             })
         }
     </ScrollView>
-      <TouchableOpacity onPress={()=>props.navigation.navigate("AddpostScreen")}  style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5),display:"flex",justifyContent:"center",alignItems:"center",backgroundColor:colors.pink,position:"absolute",top:"80%",right:"5%"}}>
+      <TouchableOpacity onPress={()=>props.navigation.navigate("AddTweet")}  style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5),display:"flex",justifyContent:"center",alignItems:"center",backgroundColor:colors.pink,position:"absolute",top:"80%",right:"5%"}}>
       <Ionicons name="add" size={30} color="white"  />
       </TouchableOpacity>
-    </View>
-   <Bottomtab props={props}></Bottomtab> 
+    </View>   
+<Bottomtab props={props}></Bottomtab>   
     </Screen>
   )
     }

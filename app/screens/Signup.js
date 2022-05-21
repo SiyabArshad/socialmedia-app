@@ -107,6 +107,7 @@ if(!emailValidation(tempfeilds[1].value))
                     bio:"",
                     userid:userCredential.user.uid,
                     followers:[],
+                    following:[],
                     blockusers:[]
                 }).then((result)=>{
                     updateProfile(auth.currentUser,{displayName:tempfeilds[0].value,photoURL:""})

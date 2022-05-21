@@ -10,6 +10,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import Dialog from "react-native-dialog";
 import Toast from 'react-native-root-toast'
+import Bottomtab from "../components/Bottomtab"
 import {
     useTheme,
     Avatar,
@@ -99,6 +100,7 @@ export default function Addbio(props) {
 </TouchableOpacity>
 </View>
 </View>    
+<Bottomtab props={props}></Bottomtab>
     </Screen>
   
     )}
