@@ -38,7 +38,7 @@ export default function ResetPassword(props) {
         showindicator(true);
         let tempfeilds = [...inputvalue];
         if (tempfeilds[0].value === "") {
-            let toast = Toast.show('Please fill all feilds', {
+            let toast = Toast.show('Please fill all fields', {
                 duration: Toast.durations.LONG,
               });
               setTimeout(function hideToast() {

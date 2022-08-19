@@ -28,6 +28,7 @@ import {getAuth,updateProfile} from "firebase/auth"
 import { ref,getDownloadURL,getStorage, uploadBytes  } from "firebase/storage"
 import app from "../config/firebase"
 import { Authcontext } from '../config/authconetxt';
+import Bottomtab from "../components/Bottomtab"
 export default function UpdateProfile(props) {
   const { user } = Authcontext();  
   const auth=getAuth(app)
@@ -90,7 +91,7 @@ export default function UpdateProfile(props) {
     const updatedetails=async()=>{
       if(username===''||bio===''||profile==='')
       {
-        alert("Somefeilds are missing")
+        alert("Somefields are missing")
         return
       }
       try{
@@ -180,6 +181,7 @@ export default function UpdateProfile(props) {
 </TouchableOpacity>
 </View>
                 </View>    
+<Bottomtab props={props}></Bottomtab>
     </Screen>
   
     )}

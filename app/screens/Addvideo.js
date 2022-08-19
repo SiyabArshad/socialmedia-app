@@ -28,94 +28,78 @@ import app from '../config/firebase'
 import { Authcontext } from '../config/authconetxt';
 import Toast from 'react-native-root-toast'
 import Bottomtab from '../components/Bottomtab'
-export default function Addpost(props) {
-  const { user } = Authcontext();  
+import { Video, AVPlaybackStatus } from 'expo-av';
+export default function Addvideo(props) {
+    const { user } = Authcontext();  
     const auth=getAuth(app)
     const db=getFirestore(app)
     const storage=getStorage(app)
     const [indicator,showindicator]=React.useState(false)
-    const[capt,setcapt]=React.useState("")
-    const[loca,setloca]=React.useState("")
-    const[momentpic,setmomentpic]=React.useState("")
-    const [visible, setVisible] = React.useState(false);
+    const[title,settitle]=React.useState("")
+    const[desc,setdesc]=React.useState("")
+    const[movie,setmovie]=React.useState("")
+    const[percent,setpercent]=React.useState("")
     const [visiblew, setVisiblew] = React.useState(false);
-  const showDialog = () => {
-    setVisible(true);
-  };
   const showDialogw = () => {
     setVisiblew(true);
   };
-
-  const handleCamera = () => {
-    setVisible(false);
-    openCamera()
-  };
-
   const handleGallery = () => {
-    setVisible(false);
     showImagePicker()
   };
-    //camera open and gallery
-    const openCamera = async () => {
-      // Ask the user for the permission to access the camera
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-  
-      if (permissionResult.granted === false) {
-        alert("You've refused to allow this appp to access your camera!");
-        return;
-      }
-  
-      const result = await ImagePicker.launchCameraAsync();
-      if (!result.cancelled) {
-        setmomentpic(result.uri);
-       
-      }
-    }
-
     const showImagePicker = async () => {
       // Ask the user for the permission to access the media library 
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  
+
       if (permissionResult.granted === false) {
-        alert("You've refused to allow this appp to access your photos!");
+        alert("You've refused to allow this appp to access your gallery!");
         return;
       }
   
-      const result = await ImagePicker.launchImageLibraryAsync();
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes:'Videos'
+      });
       if (!result.cancelled) {
-        setmomentpic(result.uri);
+        setmovie(result.uri);
       }
     }
     //end
 const addpost=()=>{
- showindicator(true)
-  updatepost()
+if(movie==null)
+{
+    let toast = Toast.show('no video selected', {
+        duration: Toast.durations.LONG,
+      });
+      setTimeout(function hideToast() {
+        Toast.hide(toast);
+      }, 1000);
+    return 
+}
+    updatepost()
 }
     const updatepost=async()=>{
       try{
         showindicator(true)  
-        const storageRef = ref(storage,'posts/' + user.email + "post"+new Date().toLocaleString());
-        const img = await fetch(momentpic);
+        const storageRef = ref(storage,'videos/' + user.email + "post"+new Date().toLocaleString());
+        const img = await fetch(movie);
         const bytes = await img.blob();
         uploadBytes(storageRef, bytes)
         .then(snapshot => {
-          return getDownloadURL(snapshot.ref)
-          showindicator(false)
+            showindicator(false)
+            return getDownloadURL(snapshot.ref)
         })
         .then(downloadURL => {
-          setmomentpic(downloadURL)
           setTimeout(() => {
-            addDoc(collection(db, "allposts"), {
-              post:downloadURL,
-              caption:capt,
-              location:loca,
+            addDoc(collection(db, "videos"), {
+              video:downloadURL,
+              title:title,
+              desc:desc,
               time:serverTimestamp(),
               userid:auth.currentUser.uid,
               likes:[],
               comments:[]
             }).then(()=>{
               showindicator(false)
-              let toast = Toast.show('Post added', {
+              let toast = Toast.show('video added', {
                 duration: Toast.durations.LONG,
               });
               setTimeout(function hideToast() {
@@ -130,9 +114,7 @@ const addpost=()=>{
                 Toast.hide(toast);
               }, 1000);
             })
-           }, 3000); 
-          showindicator(false)
-              
+           }, 3000);    
         })
       }
       catch{
@@ -145,7 +127,6 @@ const addpost=()=>{
         }, 1000);
       }
     }
-    
     React.useEffect(()=>{
     showDialogw()
     },[])
@@ -163,34 +144,36 @@ const addpost=()=>{
         </Dialog.Description>
         <Dialog.Button label="Agree" onPress={()=>setVisiblew(false)} />
       </Dialog.Container>
-        <Dialog.Container visible={visible}>
-        <Dialog.Title>Image Options</Dialog.Title>
-        <Dialog.Description>
-          Select camera for live image and gallery for existing one.
-        </Dialog.Description>
-        <Dialog.Button label="Camera" onPress={handleCamera} />
-        <Dialog.Button label="Gallery" onPress={handleGallery} />
-      </Dialog.Container>
-      <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false}>
     <View style={{padding:RFPercentage(2)}}>
         <View style={{display:"flex",flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
-        <TouchableOpacity onPress={()=>props.navigation.navigate("Home")}>
+        <TouchableOpacity onPress={()=>props.navigation.navigate("Videos")}>
         <Ionicons name="chevron-back" size={30} color={colors.mblack} />
         </TouchableOpacity>
-            <Text style={{fontSize:RFPercentage(2.5)}}>Add Moment</Text>
+            <Text style={{fontSize:RFPercentage(2.5)}}>Add Video</Text>
             <TouchableOpacity>
             <MaterialIcons name="supervisor-account" size={35} color={colors.mblack} />
         </TouchableOpacity>
         </View>
         <View>
-            <Image resizeMode= "contain" style={{width:"100%",height:RFPercentage(40),marginVertical:RFPercentage(5)}} source={momentpic?{uri:momentpic}:require("../../images/nav.png")}></Image>
+        <Video
+        
+        style={{width:"100%",height:RFPercentage(40),marginVertical:RFPercentage(5),display:!movie?"none":"flex"}}
+        source={{
+          uri: movie,
+        }}
+        useNativeControls
+        resizeMode="contain"
+        isLooping
+        shouldPlay={true}
+      />
             <View style={{display:'flex',justifyContent:"center",alignItems:"center"}}>
-            <TouchableOpacity onPress={showDialog}  style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5),display:"flex",justifyContent:"center",alignItems:"center",backgroundColor:colors.pink}}>
+            <TouchableOpacity onPress={handleGallery}  style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5),display:"flex",justifyContent:"center",alignItems:"center",backgroundColor:colors.pink}}>
       <Ionicons name="camera" size={30} color="white"  />
       </TouchableOpacity>
             </View>
-            <TextInput style={{borderColor:colors.grey,borderWidth:1,color:colors.mblack,height:RFPercentage(7),width:"100%",borderRadius:RFPercentage(1),padding:RFPercentage(2),marginVertical:RFPercentage(2)}} placeholder='Caption' onChangeText={(text)=>setcapt(text)} value={capt} />
-<TextInput style={{borderColor:colors.grey,borderWidth:1,color:colors.mblack,height:RFPercentage(7),width:"100%",borderRadius:RFPercentage(1),padding:RFPercentage(2)}} placeholder='Location (Optional)' onChangeText={(text)=>setloca(text)} value={loca} />
+            <TextInput style={{borderColor:colors.grey,borderWidth:1,color:colors.mblack,height:RFPercentage(7),width:"100%",borderRadius:RFPercentage(1),padding:RFPercentage(2),marginVertical:RFPercentage(2)}} placeholder='Title...' onChangeText={(text)=>settitle(text)} value={title} />
+<TextInput style={{borderColor:colors.grey,borderWidth:1,color:colors.mblack,height:RFPercentage(7),width:"100%",borderRadius:RFPercentage(1),padding:RFPercentage(2)}} placeholder='Description...' onChangeText={(text)=>setdesc(text)} value={desc} />
 <TouchableOpacity onPress={addpost} style={{backgroundColor:colors.pink,height:RFPercentage(7),width:"100%",borderRadius:RFPercentage(1),padding:RFPercentage(2),marginVertical:RFPercentage(2)}}>
     <Text style={{color:colors.white,textAlign:"center",fontWeight:"bold"}}>Upload</Text>
 </TouchableOpacity>

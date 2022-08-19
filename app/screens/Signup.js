@@ -7,7 +7,7 @@ import LoadingModal from '../components/LoadingModal'
 import InputFeild from "../components/InputFeild"
 import AppButton from '../components/AppButton'
 import { Ionicons } from '@expo/vector-icons';
-import {createUserWithEmailAndPassword,getAuth,deleteUser,updateProfile} from "firebase/auth"
+import {createUserWithEmailAndPassword,getAuth,deleteUser,updateProfile,sendEmailVerification} from "firebase/auth"
 import {doc,setDoc,getFirestore, addDoc, serverTimestamp} from "firebase/firestore"
 import app from '../config/firebase'
 import Toast from 'react-native-root-toast'
@@ -27,7 +27,7 @@ export default function Signup(props) {
             value: "",
         },
         {
-            placeholder: "Location",
+            placeholder: "Location(Optional)",
             iconName: 'location-pin',
             value: "",
         },
@@ -63,8 +63,8 @@ export default function Signup(props) {
     const handelsignup=()=>{
         showindicator(true);
         let tempfeilds = [...inputvalue];
-        if (tempfeilds[0].value === "" || tempfeilds[1].value === ""|| tempfeilds[2].value === ""|| tempfeilds[3].value === ""|| tempfeilds[4].value === "") {
-            let toast = Toast.show('PLease fill all feilds', {
+        if (tempfeilds[0].value === "" || tempfeilds[1].value === ""|| tempfeilds[3].value === ""|| tempfeilds[4].value === "") {
+            let toast = Toast.show('PLease fill all fields', {
                 duration: Toast.durations.LONG,
               });
               setTimeout(function hideToast() {
@@ -97,44 +97,54 @@ if(!emailValidation(tempfeilds[1].value))
         try{
             showindicator(true)
             createUserWithEmailAndPassword(auth,tempfeilds[1].value,tempfeilds[3].value).then((userCredential) => {  
-            setDoc(doc(db, "users",userCredential.user.uid ), {
-                username:tempfeilds[0].value,
-                email:tempfeilds[1].value,
-                location:tempfeilds[2].value,
-                time:serverTimestamp(),
-                profile:"",
-                bio:"",
-                userid:userCredential.user.uid,
-                followers:[]
-            }).then((result)=>{
-                updateProfile(auth.currentUser,{displayName:tempfeilds[0].value,photoURL:""})
-                showindicator(false);
-                let toast = Toast.show('Welcome to FIYR', {
-                    duration: Toast.durations.LONG,
-                  });
-                  setTimeout(function hideToast() {
-                    Toast.hide(toast);
-                  }, 1000);
-            }).catch((error)=>{
-                deleteUser(auth.currentUser).then(() => {
-                    // User deleted.
-                    showindicator(false)
-                  }).catch((error) => {
-                    // An error ocurred
-                    // ...
-                    showindicator(false)
-                  });
-                  const errorCode = error.code;
-                  const errorMessage = error.message;
-                  showindicator(false);
-                  let toast = Toast.show(errorMessage, {
-                    duration: Toast.durations.LONG,
-                  });
-                  setTimeout(function hideToast() {
-                    Toast.hide(toast);
-                  }, 1000);
-          })
-
+            sendEmailVerification(userCredential.user).then(()=>{
+                setDoc(doc(db, "users",userCredential.user.uid ), {
+                    username:tempfeilds[0].value,
+                    email:tempfeilds[1].value,
+                    location:tempfeilds[2].value,
+                    time:serverTimestamp(),
+                    profile:"",
+                    bio:"",
+                    userid:userCredential.user.uid,
+                    followers:[],
+                    following:[],
+                    blockusers:[]
+                }).then((result)=>{
+                    updateProfile(auth.currentUser,{displayName:tempfeilds[0].value,photoURL:""})
+                    //email sent to registered account email address
+                    
+                    //end eamil sent code
+                    showindicator(false);
+                    let toast = Toast.show('Welcome to FIYR', {
+                        duration: Toast.durations.LONG,
+                      });
+                      setTimeout(function hideToast() {
+                        Toast.hide(toast);
+                      }, 1000);
+                }).catch((error)=>{
+                    deleteUser(auth.currentUser).then(() => {
+                        // User deleted.
+                        showindicator(false)
+                      }).catch((error) => {
+                        // An error ocurred
+                        // ...
+                        showindicator(false)
+                      });
+                      const errorCode = error.code;
+                      const errorMessage = error.message;
+                      showindicator(false);
+                      let toast = Toast.show(errorMessage, {
+                        duration: Toast.durations.LONG,
+                      });
+                      setTimeout(function hideToast() {
+                        Toast.hide(toast);
+                      }, 1000);
+              }).catch(()=>{
+                  
+              })
+    
+            })
+                
        //     props.navigation.navigate("HomeScreen")
             }).catch((error)=>{
                 const errorCode = error.code;
@@ -166,7 +176,7 @@ if(!emailValidation(tempfeilds[1].value))
             </View>
             <View style={styles.loginform}>
             <Text style={{color:colors.mblack,marginVertical:RFPercentage(2)}}>
-                Fill all feilds correctly to register yourself and share your moments
+                Fill all Fields correctly to register yourself and share your moments
             </Text>
             {
                 inputvalue.map((item,i)=>{

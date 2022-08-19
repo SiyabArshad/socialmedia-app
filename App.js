@@ -19,7 +19,9 @@ import Post from './app/screens/Post';
 import Following from './app/screens/Following';
 import { Authcontext } from './app/config/authconetxt';
 import { RootSiblingParent } from 'react-native-root-siblings';
-
+import Singletweet from './app/screens/Singletweet';
+import Singlevideo from './app/screens/Singlevideo';
+import Discover from './app/screens/Discover';
 export default function App() {
   const[load,setload]=useState(false)
   useEffect(()=>{
@@ -69,6 +71,8 @@ const Protected=()=>{
       <Stack.Screen  name="ChatScreen" component={Chat} />
       <Stack.Screen  name="AddpostScreen" component={Addpost} />
       <Stack.Screen  name="PostScreen" component={Post} />
+      <Stack.Screen  name="Singletweet" component={Singletweet} />
+      <Stack.Screen  name="Singlevideo" component={Singlevideo} />
     </Stack.Navigator>
   </NavigationContainer>
   )

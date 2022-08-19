@@ -1,0 +1,24 @@
+{
+  "cli": {
+    "version": ">= 0.49.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {}
+  },
+  "submit": {
+    "production": {
+      "ios":{
+        "appleId":"fiyr.theapp@gmail.com",
+        "ascAppId":"1630337487",
+        "appleTeamId":"K7S49D7U27"
+      }
+    }
+  }
+}

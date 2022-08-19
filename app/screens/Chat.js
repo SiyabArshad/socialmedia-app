@@ -86,7 +86,7 @@ const unsubscribe=onSnapshot(messagesQuery, (snapshot) => {
         <Ionicons name="chevron-back" size={30} color={colors.mblack} />
         </TouchableOpacity>
             <Text style={{fontSize:RFPercentage(2.5)}}>{chatuser.username}</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={()=>navigation.navigate("Profile",{userid:chatuser.userid})}>
             <Avatar.Image
                 source={{uri:chatuser.profile}}
                 size={40}

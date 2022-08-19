@@ -12,7 +12,7 @@ import { Entypo } from '@expo/vector-icons';
 import Dialog from "react-native-dialog";
 import Toast from 'react-native-root-toast'
 import Bottomtab from "../components/Bottomtab"
-import ImageView from "react-native-image-viewing";
+import { Video, AVPlaybackStatus } from 'expo-av';
 import {
     useTheme,
     Avatar,
@@ -23,39 +23,21 @@ import {
     Text,
     TouchableRipple,
     Switch,
-    Searchbar,
-    Card,
-    Button
+    Searchbar
 } from 'react-native-paper';
-
 import { collection,  deleteDoc,setDoc,doc,addDoc,getDocs,getDoc,updateDoc,getFirestore,query, where } from "firebase/firestore";
 import app from '../config/firebase'
 import { getAuth } from 'firebase/auth'
-import { async } from '@firebase/util'
-export default function Post(props) {
+export default function Singlevideo(props) {
     const [indicator,showindicator]=React.useState(false)
     const content=props.route.params.content//posts person data
-    const screenname=props.route.params.screenname
-    const userid=props.route.params.userid
     const[cmt,setcmt]=React.useState("")
-    const [reply,setreply]=React.useState("")
-    const[isreplycmtshown,setisreplycmtshown]=React.useState(false)
-    const[isreplyvisible,setisreplyvisible]=React.useState(false)
     const[isliked,setisliked]=React.useState(false)
     const[iscmtshown,setiscmtshown]=React.useState(false)
     const [visible, setVisible] = React.useState(false);
-    const [Visible, setvisible] = React.useState(false);
     const[tnl,settnl]=React.useState(content.likes.length)
-    const[cmmtindex,setcmmtindex]=React.useState(-1)
     const auth=getAuth(app)
     const db=getFirestore(app)
-
-    const images = [
-      {
-        uri: content.post,
-      }
-    ];
-    
     const commentfunctionality=()=>{
         showindicator(true)
         let newcomment=[]
@@ -64,10 +46,9 @@ export default function Post(props) {
           userid:auth.currentUser.uid,
           comment:cmt,
           profile:auth.currentUser.photoURL,
-          username:auth.currentUser.displayName,
-          replies:[]
+          username:auth.currentUser.displayName
         })
-        const upDocRef = doc(db, "allposts", content.id);    
+        const upDocRef = doc(db, "videos", content.id);    
         updateDoc(upDocRef,{comments:newcomment}).then(()=>{
           showindicator(false)
             let toast = Toast.show('Comment added', {
@@ -79,7 +60,7 @@ export default function Post(props) {
               const docRef = doc(db, "users", content.userid);
               getDoc(docRef).then((docSnap)=>{
                   const nu=docSnap.data()
-                  let stringnotify=auth.currentUser.displayName+" "+"commented on your post"
+                  let stringnotify=auth.currentUser.displayName+" "+"commented on your video"
                   sendPushNotification(nu.token,stringnotify)
                 }).catch(()=>{
               })
@@ -96,62 +77,13 @@ export default function Post(props) {
         })  
         
     }
-
-    const commentid=async(ind)=>{
-      setisreplycmtshown(!isreplycmtshown)
-      setcmmtindex(ind)
-    }
-    const commentsrepliesfunction=async(item)=>{
-      
-      showindicator(true)
-      let newcomment=[]
-      newcomment=content.comments
-      let cmmt=newcomment.filter((ite)=>ite.userid===item.userid)
-      cmmt[0].replies?.push({
-        userid:auth.currentUser.uid,
-        comment:reply,
-        profile:auth.currentUser.photoURL,
-        username:auth.currentUser.displayName
-      })
-      let modcomments=newcomment.filter((ite)=>ite.userid!==item.userid)
-      modcomments.push(cmmt[0])
-      const upDocRef = doc(db, "allposts", content.id);    
-      updateDoc(upDocRef,{comments:modcomments}).then(()=>{
-        showindicator(false)
-          let toast = Toast.show('Reply added', {
-              duration: Toast.durations.LONG,
-            });
-            setTimeout(function hideToast() {
-              Toast.hide(toast);
-            }, 1000);
-            const docRef = doc(db, "users", item.userid);
-            getDoc(docRef).then((docSnap)=>{
-                const nu=docSnap.data()
-                let stringnotify=auth.currentUser.displayName+" "+"Replied on your comments"
-                sendPushNotification(nu.token,stringnotify)
-              }).catch(()=>{
-            })
-            showindicator(false)
-      }).catch(()=>{
-        setisliked(false)
-          let toast = Toast.show('Try again later', {
-              duration: Toast.durations.LONG,
-            });
-            setTimeout(function hideToast() {
-              Toast.hide(toast);
-            }, 1000);
-            showindicator(false)
-      })  
-    
-
-    }
     const likefunctionality=()=>{
       setisliked(true)
       settnl(tnl+1)
       let newlikes=[]
       newlikes=content.likes
       newlikes.push({userid:auth.currentUser.uid})
-      const upDocRef = doc(db, "allposts", content.id);    
+      const upDocRef = doc(db, "videos", content.id);    
       updateDoc(upDocRef,{likes:newlikes}).then(()=>{
         setisliked(true)
           let toast = Toast.show('Liked', {
@@ -163,7 +95,7 @@ export default function Post(props) {
             const docRef = doc(db, "users", content.userid);
             getDoc(docRef).then((docSnap)=>{
                 const nu=docSnap.data()
-                let stringnotify=auth.currentUser.displayName+" "+"likes your post"
+                let stringnotify=auth.currentUser.displayName+" "+"likes your video"
                 sendPushNotification(nu.token,stringnotify)
               }).catch(()=>{
             })
@@ -191,10 +123,10 @@ export default function Post(props) {
     }
     const handeldeletepost=()=>{
         showindicator(true)
-        const upDocRef = doc(db, "allposts", content.id);    
+        const upDocRef = doc(db, "videos", content.id);    
         deleteDoc(upDocRef).then(()=>{
             showindicator(false)
-            let toast = Toast.show('Post deleted', {
+            let toast = Toast.show('video deleted', {
                 duration: Toast.durations.LONG,
               });
               setTimeout(function hideToast() {
@@ -285,12 +217,6 @@ export default function Post(props) {
   }
       return (
     <Screen style={{ flex: 1,backgroundColor: colors.white }}>
-      <ImageView
-  images={images}
-  imageIndex={0}
-  visible={Visible}
-  onRequestClose={() => setvisible(false)}
-/>
         <LoadingModal show={indicator}></LoadingModal>
         <Dialog.Container visible={visible}>
         <Dialog.Title>Image Options</Dialog.Title>
@@ -302,10 +228,10 @@ export default function Post(props) {
       </Dialog.Container>
     <View style={{padding:RFPercentage(2),marginBottom:RFPercentage(10)}}>
         <View style={{display:"flex",flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
-        <TouchableOpacity onPress={()=>props.navigation.navigate(screenname,{userid:userid})}>
+        <TouchableOpacity onPress={()=>props.navigation.navigate("Videos")}>
         <Ionicons name="chevron-back" size={30} color={colors.mblack} />
         </TouchableOpacity>
-            <Text style={{fontSize:RFPercentage(2.5)}}>{content.username} Post</Text>
+            <Text style={{fontSize:RFPercentage(2.5)}}>{content.username} Video</Text>
             <TouchableOpacity>
             <MaterialIcons name="supervisor-account" size={35} color={colors.mblack} />
         </TouchableOpacity>
@@ -322,9 +248,17 @@ export default function Post(props) {
         </TouchableOpacity>
         </View>
     </View>
-        <TouchableOpacity onPress={()=>setvisible(true)}>
-            <Image resizeMode= 'contain' style={{width:"100%",minHeight:RFPercentage(45),marginVertical:RFPercentage(2)}} source={content.post?{uri:content.post}:require("../../images/nav.png")}></Image>
-</TouchableOpacity>
+        <View>
+        <Video
+        style={{width:"100%",minHeight:RFPercentage(45),marginVertical:RFPercentage(2)}}
+        source={{
+          uri: content.video,
+        }}
+        useNativeControls
+        resizeMode="contain"
+        isLooping
+      />
+</View>
      <View style={{flexDirection:"row",justifyContent:"space-between",paddingHorizontal:RFPercentage(1)}}> 
         <View>
         <TouchableOpacity disabled={isliked} onPress={likefunctionality}>
@@ -342,47 +276,16 @@ export default function Post(props) {
     <FontAwesome5 name="telegram-plane" size={30} color={colors.pink} />
     </TouchableOpacity>
     </View>
-   
  {
      content.comments.map((item,i)=>{
          return(
             <View key={i}>
-              {/**replyinput box */}
-              <View style={{display:isreplycmtshown&&i===cmmtindex?"flex" :"none",alignItems:"center",flexDirection:"row"}}>
-    <TextInput style={{borderBottomColor:colors.grey,borderBottomWidth:1,color:colors.mblack,height:RFPercentage(7),width:"85%",padding:RFPercentage(2),marginVertical:RFPercentage(2)}} placeholder='Add Reply' onChangeText={(text)=>setreply(text)} value={reply}  />
-    <TouchableOpacity  onPress={()=>commentsrepliesfunction(item)} style={{display:'flex',justifyContent:"center",alignItems:"center",padding:RFPercentage(1)}}>
-    <FontAwesome5 name="telegram-plane" size={30} color={colors.pink} />
-    </TouchableOpacity>
-    </View>
-              {/**end */}
-              <View style={{marginVertical:RFPercentage(1)}}>
-        <View style={{display:"flex",flexDirection:"row"}}>
+        <View style={{display:"flex",flexDirection:"row",marginVertical:RFPercentage(1)}}>
             <Avatar.Image source={item.profile?{uri:item.profile}:require("../../images/user.png")} size={40}></Avatar.Image>
-            <View style={{display:"flex",justifyContent:"center",marginHorizontal:RFPercentage(2)}}>
-            <Caption>{item.username}</Caption>
-            <Paragraph>{item.comment}</Paragraph>
-            </View>
-            <TouchableOpacity  onPress={()=>commentid(i) }><Caption style={{color:colors.blue}}>Reply</Caption></TouchableOpacity>
-        </View>
-        </View>
-        {/**comments replies */}
-        {
-          item.replies?.map((item)=>{
-            return(
-      <View style={{display:isreplycmtshown?"flex":"none",marginVertical:RFPercentage(1),marginLeft:RFPercentage(5)}}>
-        <View style={{display:"flex",flexDirection:"row"}}>
-            <Avatar.Image source={item.profile?{uri:item.profile}:require("../../images/user.png")} size={40}></Avatar.Image>
-            <View style={{display:"flex",justifyContent:"center",marginHorizontal:RFPercentage(2)}}>
-            <Caption>{item.username}</Caption>
+            <View style={{display:"flex",justifyContent:"center",alignItems:"center",marginHorizontal:RFPercentage(2)}}>
             <Paragraph>{item.comment}</Paragraph>
             </View>
         </View>
-        </View>
-            )
-          })
-        }
-        
-        {/**ends replies */}
     </View>
 
          )

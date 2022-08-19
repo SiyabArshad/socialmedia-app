@@ -16,7 +16,7 @@ export default function Signin({navigation}) {
             FIYR is a social app that lets you share your
         </Text>
         <Text style={{color:colors.mgrey,fontSize:RFPercentage(1.7),textAlign:"center"}}>
-            moments with freinds 
+            moments with Friends 
         </Text>
         </View>
         </View>

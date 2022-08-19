@@ -10,6 +10,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { doc, setDoc,getFirestore,collection,addDoc,getDocs,getDoc,updateDoc,serverTimestamp  } from "firebase/firestore"; 
 import {getAuth} from "firebase/auth"
 import app from '../config/firebase'
+import Bottomtab from "../components/Bottomtab"
 import {
     useTheme,
     Avatar,
@@ -83,7 +84,7 @@ export default function Search(props) {
                     {item.data.username}
                 </Title>
                 <Text style={{color:colors.darkGrey}}>
-                    {item.data.email}
+                    @_{item.data.username}
                 </Text>
                 </View>
             </View>
@@ -93,6 +94,7 @@ export default function Search(props) {
     }
       </ScrollView>           
         </View>    
+<Bottomtab props={props}></Bottomtab>
     </Screen>
   )
 }

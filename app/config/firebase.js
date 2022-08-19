@@ -5,12 +5,12 @@ import { initializeApp } from "firebase/app";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCqj0SuNiFluTcd_y1eTIuxzS891jZJHXk",
-  authDomain: "socialmedia-7c514.firebaseapp.com",
-  projectId: "socialmedia-7c514",
-  storageBucket: "socialmedia-7c514.appspot.com",
-  messagingSenderId: "735784491594",
-  appId: "1:735784491594:web:187af5d3ea419bc8cf24b3"
+  apiKey: "xxxxxxxxx",
+  authDomain: "xxxxxxxx",
+  projectId: "xxxxxxxx",
+  storageBucket: "xxxxxxxxxx",
+  messagingSenderId: "xxxxxxxxx",
+  appId: "xxxxxxxxxx"
 };
 
 // Initialize Firebase

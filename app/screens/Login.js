@@ -45,7 +45,7 @@ export default function Login(props) {
         showindicator(true);
         let tempfeilds = [...inputvalue];
         if (tempfeilds[0].value === "" || tempfeilds[1].value === "") {
-            let toast = Toast.show('Please fill all required feilds', {
+            let toast = Toast.show('Please fill all required fields', {
                 duration: Toast.durations.LONG,
               });
               setTimeout(function hideToast() {

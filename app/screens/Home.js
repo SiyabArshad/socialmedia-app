@@ -1,4 +1,4 @@
-import { View, ImageBackground,Text,StyleSheet,Image,TouchableOpacity,FlatList,ScrollView,RefreshControl } from 'react-native'
+import { View, ImageBackground,Text,StyleSheet,Image,TouchableOpacity,FlatList,ScrollView,RefreshControl,Dimensions } from 'react-native'
 import * as React from 'react'
 import {RFPercentage} from "react-native-responsive-fontsize"
 import colors from '../config/colors'
@@ -7,15 +7,19 @@ import LoadingModal from '../components/LoadingModal'
 import { MaterialIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { collection,  setDoc,doc,addDoc,getDocs,getDoc,updateDoc,getFirestore,query, where } from "firebase/firestore";
+import { collection,  setDoc,doc,addDoc,getDocs,getDoc,updateDoc,getFirestore,query, where ,orderBy} from "firebase/firestore";
 import app from '../config/firebase'
 import { getAuth } from 'firebase/auth'
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { useIsFocused } from "@react-navigation/native";
+import Bottomtab from "../components/Bottomtab"
 const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
   }
+  const width=Dimensions.get("screen").width;
+  const height=Dimensions.get("screen").height;
+  
 export default function Home(props) {
   const isFocused = useIsFocused();
     const auth=getAuth(app)
@@ -25,7 +29,6 @@ export default function Home(props) {
     const [allposts,setallposts]=React.useState([])
     const [refreshing, setRefreshing] = React.useState(false);
     const [users,setusers]=React.useState([])
-    const[dn,setdn]=React.useState("")
     const onRefresh = React.useCallback(() => {
       setRefreshing(true);
       wait(2000).then(() => setRefreshing(false));
@@ -33,63 +36,137 @@ export default function Home(props) {
   
     const readingdata=()=>{
         showindicator(true)
-        //setallfeeds([])
-      ///  setallposts([])
-        readinguserdata()
-        getDocs(collection(db, "allposts")).then((res)=>{
+        //readinguserdata()
+      //console.log("start position")
+        const docRef = doc(db, "users", auth.currentUser.uid);
+        getDoc(docRef).then((docSnap)=>{
+          //console.log("inside current user position") 
+          const nu=docSnap.data()
+            getDocs(collection(db, "users")).then((res)=>{
+            //  console.log("inside all user position")
+              const quests=res.docs.map(doc=>({
+                data:doc.data(),
+                id:doc.id
+              }))
+              const tempusers=[]
+              quests.map((item,i)=>{
+                let flagv=false
+                for(let k=0;k<nu.following.length;k++)
+                {
+                  if(nu.following[k].userid==item.data.userid)
+                  {
+                    flagv=true
+                    break
+                  }
+                }
+                if(flagv)
+                {
+                  tempusers.push({
+                    data:item.data,
+                    id:item.id
+                })
+                }
+              })
+                setusers(tempusers)
+                            //code for posts
+//particular code to get all posts data
+//showindicator(true)
+//console.log("inside first then position")
+const q=query(collection(db, "allposts"),orderBy('time','desc'))
+getDocs(q).then((res)=>{
+  const quests=res.docs.map(doc=>({
+    data:doc.data(),
+    id:doc.id
+  }))
+  //code for randomizing posts
+/*   for (let i =quests.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [quests[i], quests[j]] = [quests[j], quests[i]];
+}*/
+  setallposts(quests)
+  const tempdata=[]
+  allposts.map((item,j)=>{
+      for(let i=0;i<tempusers.length;i++)
+      {
+
+        if(item.data.userid==tempusers[i].data.userid)
+        {
+          const postfeed={
+            post:item.data.post,
+            caption:item.data.caption,
+            time:item.data.time,
+            username:tempusers[i].data.username,
+            profile:tempusers[i].data.profile,
+            userid:item.data.userid,
+            likes:item.data.likes,
+            comments:item.data.comments,
+            id:item.id      
+          }
+        tempdata.push(postfeed) 
+        break
+        } 
+      }
+  })  
+  setallfeeds(tempdata)
+  showindicator(false)      
+}).catch((e)=>{
+    showindicator(false)
+})
+            //end
+
+               showindicator(false)
+            }).catch((e)=>{
+                showindicator(false)
+            })
+          }).catch(()=>{
+            showindicator(false)
+            })
+
+
+
+        
+    }
+
+    /*const readinguserdata=()=>{
+      showindicator(true)
+      setusers([])
+      const docRef = doc(db, "users", auth.currentUser.uid);
+    getDoc(docRef).then((docSnap)=>{
+        const nu=docSnap.data()
+        getDocs(collection(db, "users")).then((res)=>{
           const quests=res.docs.map(doc=>({
             data:doc.data(),
             id:doc.id
           }))
-          for (let i =quests.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [quests[i], quests[j]] = [quests[j], quests[i]];
-        }
-          setallposts(quests)
-          const tempdata=[]
-          allposts.map((item,j)=>{
-              for(let i=0;i<users.length;i++)
+          const tempusers=[]
+          quests.map((item,i)=>{
+            let flagv=false
+            for(let k=0;k<nu.following.length;k++)
+            {
+              if(nu.following[k].userid==item.data.userid)
               {
-  
-                if(item.data.userid==users[i].data.userid)
-                {
-                  const postfeed={
-                    post:item.data.post,
-                    caption:item.data.caption,
-                    time:item.data.time,
-                    username:users[i].data.username,
-                    profile:users[i].data.profile,
-                    userid:item.data.userid,
-                    likes:item.data.likes,
-                    comments:item.data.comments,
-                    id:item.id      
-                  }
-                tempdata.push(postfeed) 
+                flagv=true
                 break
-                } 
               }
-          })  
-          setallfeeds(tempdata)
-          showindicator(false)      
+            }
+            if(flagv)
+            {
+              tempusers.push({
+                data:item.data,
+                id:item.id
+            })
+            }
+          })
+            setusers(tempusers)
+            showindicator(false)
         }).catch((e)=>{
             showindicator(false)
         })
-    }
-
-    const readinguserdata=()=>{
-      showindicator(true)
-      getDocs(collection(db, "users")).then((res)=>{
-        const quests=res.docs.map(doc=>({
-          data:doc.data(),
-          id:doc.id
-        }))
-          setusers(quests)
-          setsearched(quests)
-          showindicator(false)
-      }).catch((e)=>{
-          showindicator(false)
-      })
-  }
+        
+      }).catch(()=>{
+        showindicator(false)
+        })
+  }*/
 //push notification function
 async function registerForPushNotificationsAsync() {
   let token;
@@ -105,7 +182,6 @@ async function registerForPushNotificationsAsync() {
       return;
     }
     token = (await Notifications.getExpoPushTokenAsync()).data;
-    console.log(token);
   } else {
     alert('Must use physical device for Push Notifications');
   }
@@ -128,22 +204,41 @@ if(token)
   return token;
 }
 //end push notification function
+React.useEffect(()=>{
+  if(isFocused)
+  {
+ //   readinguserdata()
+    readingdata()
+  }
+},[isFocused,refreshing,props])
     React.useEffect(()=>{
-      if(isFocused)
-      {
-        readinguserdata()
-        readingdata()
-      }
-    },[refreshing,props,isFocused])
-    React.useEffect(()=>{
-    (()=>registerForPushNotificationsAsync())()
-    onRefresh()
+      (()=>registerForPushNotificationsAsync())()
     },[])
+    if(indicator)
+    {
+      return(
+<LoadingModal></LoadingModal>
+      )
+    }
+    /*
+    else if(allfeeds.length==0)
+    {
+      return(
+        <View style={{display:"flex",justifyContent:"center",alignItems:"center",flex:1,backgroundColor:colors.white}}>
+          <Text style={{color:colors.mblack}}>Please wait</Text>
+          <TouchableOpacity onPress={()=>props.navigation.navigate("AddpostScreen")}  style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5),display:"flex",justifyContent:"center",alignItems:"center",backgroundColor:colors.pink,position:"absolute",top:"80%",right:"5%"}}>
+      <Ionicons name="add" size={30} color="white"  />
+      </TouchableOpacity>
+      <Bottomtab props={props}></Bottomtab>
+        </View>
+      )
+    }*/
+    else
+    {
     return (
     <Screen style={{ flex: 1,backgroundColor: colors.white }}>
-        <LoadingModal show={indicator}></LoadingModal>
-    <View style={{padding:RFPercentage(2)}}>
-        <View style={{display:"flex",flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
+    <View style={{display:"flex",justifyContent:"center"}}>
+        <View style={{display:"flex",padding:RFPercentage(2),flexDirection:"row",justifyContent:"space-between",alignItems:"center"}}>
         <TouchableOpacity onPress={()=>props.navigation.openDrawer()}>
         <Ionicons name="menu-outline" size={35} color={colors.mblack} />
         </TouchableOpacity>
@@ -161,27 +256,28 @@ if(token)
     }
     >
         {
-            allfeeds&&allfeeds.map((item,i)=>{                    
+            allfeeds?.map((item,i)=>{                    
                 return(
             <View key={i} style={{flex:1,marginVertical:RFPercentage(2)}}>
-            <TouchableOpacity onPress={()=>props.navigation.navigate("Profile",{userid:item.userid})}><Image style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5)}} source={item.profile?{uri:item.profile}:require("../../images/user.png")}></Image></TouchableOpacity>
-            <Text style={{marginTop:RFPercentage(1),color:colors.mblack}}>{item.caption&&item.caption}</Text>
-            <Text style={{marginTop:RFPercentage(1),color:colors.mblack,fontWeight:"bold"}}>{item.username&&item.username}</Text>
-            <Text style={{marginVertical:RFPercentage(1),color:colors.mblack}}>{item.time&&new Date(item.time.seconds*1000).toLocaleDateString()
+            <TouchableOpacity style={{padding:RFPercentage(2)}} onPress={()=>props.navigation.navigate("Profile",{userid:item.userid})}><Image style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5)}} source={item.profile?{uri:item.profile}:require("../../images/user.png")}></Image></TouchableOpacity>
+            <Text style={{paddingHorizontal:RFPercentage(2),marginTop:RFPercentage(1),color:colors.mblack}}>{item.caption&&item.caption}</Text>
+            <Text style={{paddingHorizontal:RFPercentage(2),marginTop:RFPercentage(1),color:colors.mblack,fontWeight:"bold"}}>{item.username&&item.username}</Text>
+            <Text style={{paddingHorizontal:RFPercentage(2),marginVertical:RFPercentage(1),color:colors.mblack}}>{item.time&&new Date(item.time.seconds*1000).toLocaleDateString()
 }</Text>
-         <TouchableOpacity onPress={()=>props.navigation.navigate("PostScreen",{content:item})}>           
-        <Image  resizeMode= 'stretch' style={{width:"100%",marginVertical:RFPercentage(3),height:RFPercentage(35),borderRadius:RFPercentage(1)}} source={item.post?{uri:item.post}:require("../../images/nav.png")}></Image>
+         <TouchableOpacity  onPress={()=>props.navigation.navigate("PostScreen",{content:item,screenname:"Home",userid:""})}>           
+        <Image  resizeMode="contain" style={{width:width<450?width:width/1.3,marginVertical:RFPercentage(1),minHeight:height<980?height/1.9:height/2.1}} source={item.post?{uri:item.post}:require("../../images/nav.png")}></Image>
         </TouchableOpacity>
         </View>
         )
             })
         }
     </ScrollView>
-      <TouchableOpacity onPress={()=>props.navigation.navigate("AddpostScreen")}  style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5),display:"flex",justifyContent:"center",alignItems:"center",backgroundColor:colors.pink,position:"absolute",top:"90%",right:"5%"}}>
+      <TouchableOpacity onPress={()=>props.navigation.navigate("AddpostScreen")}  style={{width:RFPercentage(7),height:RFPercentage(7),borderRadius:RFPercentage(3.5),display:"flex",justifyContent:"center",alignItems:"center",backgroundColor:colors.pink,position:"absolute",top:"80%",right:"5%"}}>
       <Ionicons name="add" size={30} color="white"  />
       </TouchableOpacity>
     </View>
-    
+   <Bottomtab props={props}></Bottomtab> 
     </Screen>
   )
-}
+    }
+  }

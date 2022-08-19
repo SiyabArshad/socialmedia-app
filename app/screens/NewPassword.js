@@ -33,7 +33,7 @@ export default function Login(props) {
         showindicator(true);
         let tempfeilds = [...inputvalue];
         if (tempfeilds[0].value === "" || tempfeilds[1].value === "") {
-            alert("Please fill all the feilds");
+            alert("Please fill all the fields");
             showindicator(false);
             return false;
         }
